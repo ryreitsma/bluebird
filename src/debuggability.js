@@ -117,27 +117,14 @@ Promise.hasLongStackTraces = function () {
 
 Promise.config = function(opts) {
     opts = Object(opts);
+    propagateFromFunction = cancellationPropagateFrom;
+    config.cancellation = true;
+
     if ("longStackTraces" in opts && opts.longStackTraces) {
         Promise.longStackTraces();
     }
     if ("warnings" in opts) {
         config.warnings = !!opts.warnings;
-    }
-    if ("cancellation" in opts && opts.cancellation && !config.cancellation) {
-        if (async.haveItemsQueued()) {
-            throw new Error(
-                "cannot enable cancellation after promises are in use");
-        }
-        Promise.prototype._clearCancellationData =
-            cancellationClearCancellationData;
-        Promise.prototype._propagateFrom = cancellationPropagateFrom;
-        Promise.prototype._onCancel = cancellationOnCancel;
-        Promise.prototype._setOnCancel = cancellationSetOnCancel;
-        Promise.prototype._attachCancellationCallback =
-            cancellationAttachCancellationCallback;
-        Promise.prototype._execute = cancellationExecute;
-        propagateFromFunction = cancellationPropagateFrom;
-        config.cancellation = true;
     }
 };
 
@@ -160,6 +147,13 @@ Promise.prototype._propagateFrom = function (parent, flags) {
     USE(parent);
     USE(flags);
 };
+
+Promise.prototype._clearCancellationData = cancellationClearCancellationData;
+Promise.prototype._propagateFrom = cancellationPropagateFrom;
+Promise.prototype._onCancel = cancellationOnCancel;
+Promise.prototype._setOnCancel = cancellationSetOnCancel;
+Promise.prototype._attachCancellationCallback = cancellationAttachCancellationCallback;
+Promise.prototype._execute = cancellationExecute;
 
 function cancellationExecute(executor, resolve, reject) {
     var promise = this;
